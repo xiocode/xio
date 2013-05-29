@@ -135,15 +135,5 @@ class WeiboError(StandardError):
         return 'TokenGeneratorError: ErrorCode: %s, ErrorContent: %s' % (self.error_code, self.error)
 
 
-        #hzwangpin@sina.com wx871125
-        #users = [["hzwangpin@sina.com", "wx871125"]]
-        #for username, password in users:
-        #    print username, password
-        #    login(username, password)
-        #    weibo_content = session.get('http://e.weibo.com/1739959962/ywW0JyWsO?ref=http%3A%2F%2Fweibo.com%2Fxceman%3Fwvr%3D3.6%26lf%3Dreg')
-        #    pattern = re.compile(r'mid=(\d+)&name=[^&]+&uid=(\d+)')
-        #    weibo_match = pattern.search(weibo_content.content)
-        #    print weibo_match.group(1)
-
 if __name__ == '__main__':
     login('xeoncode@gmail.com', '5845211314')
