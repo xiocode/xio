@@ -136,4 +136,4 @@ class WeiboError(StandardError):
 
 
 if __name__ == '__main__':
-    login('xeoncode@gmail.com', '5845211314')
+    login('xeoncode@gmail.com', 'xxxxxxx')
