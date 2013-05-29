@@ -25,11 +25,11 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.43 Safari/536.11'
 }
 
-#session = requests.session(headers=headers,proxies=proxies)
+session = requests.session()
 
 def _http_call(url):
     try:
-        return requests.get(url=url,headers=headers)
+        return session.get(url=url, headers=headers)
     except Exception:
         print traceback.format_exc()
         return None
@@ -51,7 +51,7 @@ def cas_boss():
         url = cas_category_base_url % x
         cas_queue.put(url)
 
-    for x in xrange(20):
+    for x in xrange(10):
         cas_group.spawn(cas_worker)
 
     cas_group.join()
@@ -68,6 +68,7 @@ def cas_worker():
             if next_page_url:
                 url = BASE_URL + next_page_url[0]
                 cas_queue.put(url)
+                print url
             cas_outer_parser(outer_text)
 
         except Exception:
@@ -78,22 +79,22 @@ def cas_worker():
 
 def cas_outer_parser(outer_text):
 #    print outer_text
-    cas_infos = {}
     outer_datas = cas_outer_pattern.findall(outer_text)
     for url, cas_id, product_name in outer_datas:
+        cas_infos = {}
         cas_id = cas_id.strip()
-        url = BASE_URL + url
-        product_name = product_name.strip()
-        resp = _http_call(url)
-        cas_infos['product_name'] = product_name
-        cas_infos['cas_id'] = cas_id
-        cas_infos['url'] = url
-        cas_infos.update(cas_inner_parser(resp.text))
-        cas_info = tb_20120924_cas_info(**cas_infos)
-        clazz_props = [name for name in dir(tb_20120924_cas_info) if not name.startswith('__')]
-        print [props for props in cas_infos.keys() if props not in clazz_props]
-        print url
-        cas_info.save()
+        result = tb_20120924_cas_info.select().where(tb_20120924_cas_info.cas_id==cas_id).execute()
+        if not result.cursor.rowcount:
+            url = BASE_URL + url
+            product_name = product_name.strip()
+            resp = _http_call(url)
+            cas_infos['product_name'] = product_name
+            cas_infos['cas_id'] = cas_id
+            cas_infos['url'] = url
+            cas_infos.update(cas_inner_parser(resp.text))
+            cas_info = tb_20120924_cas_info(**cas_infos)
+            print url
+            cas_info.save()
 
 
 def strip_tags(html):
@@ -113,7 +114,31 @@ def cas_inner_parser(inner_text):
         cas_info[key] = value
     return cas_info
 
-if __name__ == '__main__':
+def site_crawler():
     cas_boss()
+
+def products_catalog_crawler():
+    main_page = 'http://www.chemnet.com/Global/Products/'
+    catalog_pattern = re.compile(r'<a\s+href="(/Global/Products/[^"]+?)"\s+class="blue">(.*?)</a>', re.S)
+    resp = _http_call(main_page)
+    datas = catalog_pattern.findall(resp.text)
+    for url, name in datas:
+        print url, name
+
+
+def products_crawler():
+    pass
+
+def suppliers_crawler():
+    pass
+
+def buy_cralwer():
+    pass
+
+def sell_crawler():
+    pass
+
+if __name__ == '__main__':
+    site_crawler()
 
 

@@ -3,7 +3,7 @@
 __author__ = 'Tony.Shao'
 from peewee import *
 
-db = MySQLDatabase('xio', host='localhost', user='root', passwd='299792458')
+db = MySQLDatabase('xio', host='localhost', user='root', passwd='299792458', threadlocals=True)
 
 class BaseModel(Model):
     class Meta:
@@ -31,3 +31,9 @@ class tb_20120924_cas_info(BaseModel):
     risk_codes = CharField()
     safety_description = CharField()
     url = TextField()
+
+
+class tb_20120924_catalog(BaseModel):
+    id = PrimaryKeyField()
+    name = CharField()
+    url = CharField()

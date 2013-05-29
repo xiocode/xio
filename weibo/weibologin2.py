@@ -10,8 +10,8 @@ import traceback
 from requests.compat import cookielib
 import time
 
-APP_KEY = 3231340587
-APP_SECRET = '94c4a0dc3c4a571b796ffddd09778cff'
+APP_KEY = "xxxxx"
+APP_SECRET = 'xxxxx'
 CALLBACK_URL = 'http://2.xweiboproxy.sinaapp.com/callback.php'
 RSA_SERVER_URL = 'http://localhost:8888/encrypt?password=%s'
 session = requests.session()
@@ -29,7 +29,7 @@ postdata = {
     'service': 'miniblog',
     'servertime': '',
     'nonce': '',
-    'pwencode': 'rsa',
+    'pwencode': 'rsa2',
     'rsakv': '',
     'sp': '',
     'encoding': 'UTF-8',
@@ -42,7 +42,7 @@ def __get_servertime():
     '''
             获取服务器时间和nonce随机数
     '''
-    url = 'http://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&su=&rsakt=mod&client=ssologin.js(v1.4.5)&_=' + str(time.time() * 100)
+    url = 'http://login.sina.com.cn/sso/prelogin.php?entry=sso&callback=sinaSSOController.preloginCallBack&su=dW5kZWZpbmVk&rsakt=mod&client=ssologin.js(v1.4.1)&_=1344575024059'
     data = requests.get(url).text;
     p = re.compile('\((.*)\)')
     try:
@@ -77,7 +77,7 @@ def __get_user(username):
 
 def login(username, pwd):
     global session
-    url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.5)'
+    url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.2)'
     try:
         servertime, nonce, rsakv = __get_servertime()
     except Exception, e:
@@ -98,15 +98,14 @@ def login(username, pwd):
         headers=headers,
     )
     text = result.text
-    # print text.encode("UTF-8")
     p = re.compile('location\.replace\(\"(.*?)\"\)')
-    up = re.compile('feedBackUrlCallBack\((.*?)\)')
 
     try:
+        COOKIEJAR_CLASS = cookielib.LWPCookieJar
+        cookiejar = COOKIEJAR_CLASS('weibo_cookies')
         login_url = p.search(text).group(1)
-        body = session.get(login_url)
-        userinfo = up.search(body.text).group(1)
-        print userinfo
+        session.get(login_url, cookies=cookiejar)
+        cookiejar.save()
         print 'Login Success！'
     except Exception:
         print traceback.format_exc()
@@ -121,6 +120,7 @@ def getToken():
     token = qs.get('access_token')
     expires_in = qs.get('expires_in')
     if token:
+        # expires等于当前时间加上有效期，单位为秒
         expires = int(expires_in[0]) + int(time.time())
         return token[0], expires
 
@@ -134,5 +134,4 @@ class WeiboError(StandardError):
         return 'TokenGeneratorError: ErrorCode: %s, ErrorContent: %s' % (self.error_code, self.error)
 
 if __name__ == '__main__':
-    login('xeoncode@gmail.com', '299792458')
-    print getToken()
+    login('xxxxx', 'xxxxx')

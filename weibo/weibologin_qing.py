@@ -8,7 +8,12 @@ import requests
 import traceback
 import time
 import ujson
+from requests.compat import cookielib
+from urlparse import urlparse, parse_qs
 
+APP_KEY = 3231340587
+APP_SECRET = '94c4a0dc3c4a571b796ffddd09778cff'
+CALLBACK_URL = 'http://2.xweiboproxy.sinaapp.com/callback.php'
 RSA_SERVER_URL = 'http://localhost:8888/rsa?password=%s'
 session = requests.session()
 session.timeout = 10
@@ -104,25 +109,37 @@ def login(username, pwd):
         params=postdata,
         headers=headers
     )
-#    print result.url
     text = result.text
-#    print text
-    #    p = re.compile(r'\"ticket\":\(\"(.*?)\"\)')
     p = re.compile(r'sinaSSOController.loginCallBack\((.*?)\)')
     try:
-        match = p.search(text).group(1);
+        match = p.search(text).group(1)
         match = ujson.decode(match)
         login_ticket = match['ticket']
         login_url = 'http://weibo.com/sso/login.php?callback=sinaSSOController.customLoginCallBack&ticket=' + login_ticket + '&ssosavestate=' + str(
             int(time.time() / 1000)) + '&client=ssologin.js(v1.4.2)&_=' + str(int(time.time()))
-        resp = session.get(login_url)
-        print resp.text
-#        print resp.text
-#        resp = session.get('http://weibo.com')
-#        print resp.text
+        COOKIEJAR_CLASS = cookielib.LWPCookieJar
+        cookiejar = COOKIEJAR_CLASS('weibo_cookies')
+        session.get(login_url, cookies=cookiejar)
+        cookiejar.save()
+        print 'Login Success！'
+
     except Exception:
         print traceback.format_exc()
         return None
+
+
+def getToken():
+    authorize_url = "https://api.weibo.com/oauth2/authorize?client_id=%s&redirect_uri=%s&response_type=token" % (
+    APP_KEY, CALLBACK_URL)
+    response = session.get(authorize_url, allow_redirects=False)
+    callback_url = response.headers.get('location')
+    qs = parse_qs(urlparse(callback_url).fragment)
+    token = qs.get('access_token')
+    expires_in = qs.get('expires_in')
+    if token:
+        # expires等于当前时间加上有效期，单位为秒
+        expires = int(expires_in[0]) + int(time.time())
+        return token[0], expires
 
 
 class WeiboError(StandardError):
@@ -135,5 +152,15 @@ class WeiboError(StandardError):
         return 'TokenGeneratorError: ErrorCode: %s, ErrorContent: %s' % (self.error_code, self.error)
 
 
+        #hzwangpin@sina.com wx871125
+        #users = [["hzwangpin@sina.com", "wx871125"]]
+        #for username, password in users:
+        #    print username, password
+        #    login(username, password)
+        #    weibo_content = session.get('http://e.weibo.com/1739959962/ywW0JyWsO?ref=http%3A%2F%2Fweibo.com%2Fxceman%3Fwvr%3D3.6%26lf%3Dreg')
+        #    pattern = re.compile(r'mid=(\d+)&name=[^&]+&uid=(\d+)')
+        #    weibo_match = pattern.search(weibo_content.content)
+        #    print weibo_match.group(1)
+
 if __name__ == '__main__':
-    login('xeoncode@gmail.com', 'xxxxxxx')
+    login('xeoncode@gmail.com', '299792458')
